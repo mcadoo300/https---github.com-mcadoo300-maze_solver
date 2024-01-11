@@ -1,3 +1,4 @@
+import copy
 import random
 import time
 from tkinter import Tk, BOTH, Canvas
@@ -209,12 +210,63 @@ class Maze():
                 self.cells[i][j].visited = False
 
 
+    def solve(self):
+        row = 0
+        col = 0
+        searching = True
+        dirs = [[0,1],[0,-1],[1,0],[-1,0]]
+        self.cells[row][col].visited = True
+        paths = [[[row,col]]]
+        while searching:
+            cur_path = paths.pop(0)
+            if len(cur_path) > 1:
+                previous_cell = self.cells[cur_path[-2][0]][cur_path[-2][1]]
+                next_cell = self.cells[cur_path[-1][0]][cur_path[-1][1]]
+                previous_cell.draw_move(next_cell)
+                self._window.redraw()
+                if cur_path[-1] == [self.num_rows-1,self.num_cols-1]:
+                    searching = False
+            if searching:
+                row = cur_path[-1][0]
+                col = cur_path[-1][1]
+                for d in dirs:
+                    new_path = copy.deepcopy(cur_path)
+                    if 0 <= row+d[0] < self.num_rows and 0 <= col + d[1] < self.num_cols:
+                        if self.cells[row+d[0]][col+d[1]].visited is False:
+                            # move right
+                            if dirs.index(d) == 0:
+                                if self.cells[row][col].has_right_wall is False:
+                                    new_path.append([row+d[0],col+d[1]])
+                                    self.cells[row+d[0]][col+d[1]].visited = True
+                                    paths.append(new_path)
+                            #move left
+                            elif dirs.index(d) == 1:
+                                if self.cells[row][col].has_left_wall is False:
+                                    new_path.append([row+d[0],col+d[1]])
+                                    self.cells[row+d[0]][col+d[1]].visited = True
+                                    paths.append(new_path)
+                                    
+                            # move down
+                            elif dirs.index(d) == 2:
+                                if self.cells[row][col].has_bot_wall is False:
+                                    new_path.append([row+d[0],col+d[1]])
+                                    self.cells[row+d[0]][col+d[1]].visited = True
+                                    paths.append(new_path)
+                            else:
+                                if self.cells[row][col].has_top_wall is False:
+                                    new_path.append([row+d[0],col+d[1]])
+                                    self.cells[row+d[0]][col+d[1]].visited = True
+                                    paths.append(new_path)
+                        
+
+
 def main():
     win = Window(800,800)
     maze_test = Maze(x1=200,y1=200,num_rows=5,num_cols=5,cell_size_x=50,cell_size_y=50,window=win)
     maze_test._break_entrance_and_exit()
     maze_test._break_walls_r(0,0)
     maze_test.reset_visited()
+    maze_test.solve()
     win.waitForClose()
 
 if __name__ == "__main__":
