@@ -13,6 +13,8 @@ class Window():
         self.canvas.pack(fill="both",expand=True)
         self.running = False
         self._root.protocol("WM_DELETE_WINDOW",self.close)
+        self._root.update_idletasks()
+        self._root.update()
 
 
     def redraw(self):
@@ -148,7 +150,7 @@ class Maze():
         if self._window is None:
             return
         self._window.redraw()
-        time.sleep(0.05)
+        time.sleep(0.005)
     
     def _break_entrance_and_exit(self):
         entrance = [0,0]
@@ -201,7 +203,7 @@ class Maze():
                     self.cells[new_p[0]][new_p[1]].has_bot_wall = False
                     self.cells[new_p[0]][new_p[1]].draw()
                     self._window.redraw()
-                
+                time.sleep(0.05)
                 self._break_walls_r(new_p[0],new_p[1])
     
     def reset_visited(self):
@@ -209,8 +211,26 @@ class Maze():
             for j in range(self.num_cols):
                 self.cells[i][j].visited = False
 
+    def draw_enter(self):
+        center_enter = Point(self.cell_size_x/2 + self.x1,self.cell_size_y/2 + self.y1)
+        upper_enter = Point(self.cell_size_x/2 + self.x1,self.y1)
+        enter_line = Line(center_enter,upper_enter)
+        self._window.drawLine(enter_line,"gray")
+
+    def draw_exit(self):
+        center_y = (self.num_rows-1)*self.cell_size_y + self.y1 + self.cell_size_y/2
+        center_x = (self.num_cols-1)*self.cell_size_x + self.x1 + self.cell_size_x/2
+
+        center_exit = Point(center_x,center_y)
+        lower_exit = Point(center_x,center_y+ self.cell_size_x/2)
+        enter_line = Line(center_exit,lower_exit)
+        self._window.drawLine(enter_line,"gray")
+
 
     def solve(self):
+        self.draw_enter()
+        
+        self._window.redraw()
         row = 0
         col = 0
         searching = True
@@ -224,8 +244,11 @@ class Maze():
                 next_cell = self.cells[cur_path[-1][0]][cur_path[-1][1]]
                 previous_cell.draw_move(next_cell)
                 self._window.redraw()
+                time.sleep(0.05)
                 if cur_path[-1] == [self.num_rows-1,self.num_cols-1]:
                     searching = False
+                    self.draw_exit()
+                    self._window.redraw()
             if searching:
                 row = cur_path[-1][0]
                 col = cur_path[-1][1]
@@ -259,10 +282,68 @@ class Maze():
                                     paths.append(new_path)
                         
 
+    def solve2(self):
+        self.draw_enter()
+        
+        self._window.redraw()
+        row = 0
+        col = 0
+        searching = True
+        dirs = [[0,1],[0,-1],[1,0],[-1,0]]
+        self.cells[row][col].visited = True
+        paths = [[[row,col]]]
+        while searching:
+            cur_path = paths.pop(0)
+            if len(cur_path) > 1:
+                previous_cell = self.cells[cur_path[-2][0]][cur_path[-2][1]]
+                next_cell = self.cells[cur_path[-1][0]][cur_path[-1][1]]
+                previous_cell.draw_move(next_cell)
+                self._window.redraw()
+                time.sleep(0.08)
+                if cur_path[-1] == [self.num_rows-1,self.num_cols-1]:
+                    searching = False
+                    self.draw_exit()
+                    self._window.redraw()
+            if searching:
+                row = cur_path[-1][0]
+                col = cur_path[-1][1]
+                for d in dirs:
+                    new_path = copy.deepcopy(cur_path)
+                    if 0 <= row+d[0] < self.num_rows and 0 <= col + d[1] < self.num_cols:
+                        if self.cells[row+d[0]][col+d[1]].visited is False:
+                            # move right
+                            if dirs.index(d) == 0:
+                                if self.cells[row][col].has_right_wall is False:
+                                    new_path.append([row+d[0],col+d[1]])
+                                    self.cells[row+d[0]][col+d[1]].visited = True
+                                    #paths.append(new_path)
+                                    paths.insert(0,new_path)
+                            #move left
+                            elif dirs.index(d) == 1:
+                                if self.cells[row][col].has_left_wall is False:
+                                    new_path.append([row+d[0],col+d[1]])
+                                    self.cells[row+d[0]][col+d[1]].visited = True
+                                    #paths.append(new_path)
+                                    paths.insert(0,new_path)
+                                    
+                            # move down
+                            elif dirs.index(d) == 2:
+                                if self.cells[row][col].has_bot_wall is False:
+                                    new_path.append([row+d[0],col+d[1]])
+                                    self.cells[row+d[0]][col+d[1]].visited = True
+                                    #paths.append(new_path)
+                                    paths.insert(0,new_path)
+                            else:
+                                if self.cells[row][col].has_top_wall is False:
+                                    new_path.append([row+d[0],col+d[1]])
+                                    self.cells[row+d[0]][col+d[1]].visited = True
+                                    #paths.append(new_path)
+                                    paths.insert(0,new_path)
+
 
 def main():
-    win = Window(800,800)
-    maze_test = Maze(x1=200,y1=200,num_rows=5,num_cols=5,cell_size_x=50,cell_size_y=50,window=win)
+    win = Window(1800,1800)
+    maze_test = Maze(x1=200,y1=200,num_rows=30,num_cols=30,cell_size_x=30,cell_size_y=30,window=win)
     maze_test._break_entrance_and_exit()
     maze_test._break_walls_r(0,0)
     maze_test.reset_visited()
