@@ -1,52 +1,8 @@
 import copy
 import random
 import time
-from tkinter import Tk, BOTH, Canvas
+from graphics import Line, Point
 
-
-
-class Window():
-    def __init__(self, height,width):
-        self._root = Tk()
-        self._root.title("Maze Solver")
-        self.canvas = Canvas(self._root,bg="white",height=height,width=width)
-        self.canvas.pack(fill="both",expand=True)
-        self.running = False
-        self._root.protocol("WM_DELETE_WINDOW",self.close)
-        self._root.update_idletasks()
-        self._root.update()
-
-
-    def redraw(self):
-        self._root.update_idletasks()
-        self._root.update()
-    
-    def waitForClose(self):
-        self.running = True
-        while self.running:
-            self.redraw()
-
-    def close(self):
-        self.running = False
-    
-    def drawLine(self,line,fill_color="black"):
-        line.draw(self.canvas,fill_color)
-
-
-class Point():
-    def __init__(self,pos_x,pos_y):
-        self.pos_x = pos_x
-        self.pos_y = pos_y
-
-
-class Line():
-    def __init__(self,point1,point2):
-        self.point1 = point1
-        self.point2 = point2
-
-    def draw(self,canvas,fill_color):
-        canvas.create_line(self.point1.pos_x,self.point1.pos_y,self.point2.pos_x,self.point2.pos_y,fill=fill_color,width=2)
-        canvas.pack(fill="both", expand=True)
 
 
 class Cell():
@@ -93,7 +49,7 @@ class Cell():
         else:
             self._window.drawLine(wall_line,"white")
     
-    def draw_move(self,to_cell,undo=False):
+    def draw_move(self,to_cell,winning=False):
         mid_x = (self.x1+self.x2) /2
         mid_y = (self.y1+self.y2) /2
 
@@ -101,10 +57,10 @@ class Cell():
         to_mid_y = (to_cell.y1+to_cell.y2) /2
 
         move_line = Line(Point(mid_x,mid_y),Point(to_mid_x,to_mid_y))
-        if undo:
-            self._window.drawLine(move_line,"red")
+        if winning:
+            self._window.drawLine(move_line,"green")
         else:
-            self._window.drawLine(move_line,"gray")
+            self._window.drawLine(move_line,"black")
     
 
 
@@ -119,9 +75,10 @@ class Maze():
         self.cell_size_y = cell_size_y
         self._window = window
         self.cells = []
-        self._create_cells()
-
         
+
+    def start(self):
+        self._create_cells()
 
     def _create_cells(self):
         self.cells = []
@@ -203,7 +160,7 @@ class Maze():
                     self.cells[new_p[0]][new_p[1]].has_bot_wall = False
                     self.cells[new_p[0]][new_p[1]].draw()
                     self._window.redraw()
-                time.sleep(0.05)
+                time.sleep(0.008)
                 self._break_walls_r(new_p[0],new_p[1])
     
     def reset_visited(self):
@@ -211,25 +168,41 @@ class Maze():
             for j in range(self.num_cols):
                 self.cells[i][j].visited = False
 
-    def draw_enter(self):
+    def draw_enter(self,won=False):
         center_enter = Point(self.cell_size_x/2 + self.x1,self.cell_size_y/2 + self.y1)
         upper_enter = Point(self.cell_size_x/2 + self.x1,self.y1)
         enter_line = Line(center_enter,upper_enter)
-        self._window.drawLine(enter_line,"gray")
+        if won:
+            self._window.drawLine(enter_line,"green")
+        else:
+            self._window.drawLine(enter_line,"black")
 
-    def draw_exit(self):
+    def draw_exit(self,won=False):
         center_y = (self.num_rows-1)*self.cell_size_y + self.y1 + self.cell_size_y/2
         center_x = (self.num_cols-1)*self.cell_size_x + self.x1 + self.cell_size_x/2
 
         center_exit = Point(center_x,center_y)
         lower_exit = Point(center_x,center_y+ self.cell_size_x/2)
         enter_line = Line(center_exit,lower_exit)
-        self._window.drawLine(enter_line,"gray")
+        if won:
+            self._window.drawLine(enter_line,"green")
+        else:
+            self._window.drawLine(enter_line,"black")
 
 
-    def solve(self):
+    def drawWinningPath(self,path):
+        self.draw_enter(True)
+        for i in range(1,len(path)):
+            previous_cell = self.cells[path[i-1][0]][path[i-1][1]]
+            next_cell = self.cells[path[i][0]][path[i][1]]
+            previous_cell.draw_move(next_cell,True)
+            self._window.redraw()
+            time.sleep(0.09)
+        self.draw_exit(True)
+    
+
+    def solveBFS(self):
         self.draw_enter()
-        
         self._window.redraw()
         row = 0
         col = 0
@@ -248,6 +221,7 @@ class Maze():
                 if cur_path[-1] == [self.num_rows-1,self.num_cols-1]:
                     searching = False
                     self.draw_exit()
+                    self.drawWinningPath(cur_path)
                     self._window.redraw()
             if searching:
                 row = cur_path[-1][0]
@@ -282,9 +256,8 @@ class Maze():
                                     paths.append(new_path)
                         
 
-    def solve2(self):
+    def solveDFS(self):
         self.draw_enter()
-        
         self._window.redraw()
         row = 0
         col = 0
@@ -303,6 +276,7 @@ class Maze():
                 if cur_path[-1] == [self.num_rows-1,self.num_cols-1]:
                     searching = False
                     self.draw_exit()
+                    self.drawWinningPath(cur_path)
                     self._window.redraw()
             if searching:
                 row = cur_path[-1][0]
@@ -339,16 +313,3 @@ class Maze():
                                     self.cells[row+d[0]][col+d[1]].visited = True
                                     #paths.append(new_path)
                                     paths.insert(0,new_path)
-
-
-def main():
-    win = Window(1800,1800)
-    maze_test = Maze(x1=200,y1=200,num_rows=30,num_cols=30,cell_size_x=30,cell_size_y=30,window=win)
-    maze_test._break_entrance_and_exit()
-    maze_test._break_walls_r(0,0)
-    maze_test.reset_visited()
-    maze_test.solve()
-    win.waitForClose()
-
-if __name__ == "__main__":
-    main()
