@@ -1,12 +1,12 @@
 from graphics import MazeWindow, WelcomeWindow
 from maze import Maze
-
+import sys
 
 def main():
-    #win = WelcomeWindow()
-    win = MazeWindow(500,600)
+    win = WelcomeWindow()
+    win, data = win.GenNewMaze()
     pad=25
-    maze_test = Maze(x1=pad,y1=pad,num_rows=15,num_cols=15,cell_size_x=15,cell_size_y=15,window=win)
+    maze_test = Maze(x1=pad,y1=pad,num_rows=data[0],num_cols=data[1],cell_size_x=15,cell_size_y=15,window=win)
 
     maze_test.start()
     maze_test._break_entrance_and_exit()
@@ -15,6 +15,7 @@ def main():
     
     maze_test.solveBFS()
     win.waitForClose()
+    
 
 if __name__ == "__main__":
     main()

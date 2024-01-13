@@ -1,32 +1,47 @@
-from tkinter import Tk, BOTH, Canvas
+from tkinter import Tk, BOTH, Canvas, messagebox
 import tkinter as tk
-
+import sys
 
 
 class WelcomeWindow():
     def __init__(self):
         self._root = Tk()
         self._root.title("Maze Solver")
-        self._root.geometry("900x900")
+        self._root.geometry("500x200")
         self.not_ready=True
+        self.num_col = None
+        self.num_row = None
         num_col_input = tk.StringVar()
         num_rows_input = tk.StringVar()
 
-        col_input_label = tk.Label(self._root, text="Input number of columns in the maze (min=1,max=50): ", font=('calibre',10,'bold'))
+        col_input_label = tk.Label(self._root, text="Input number of columns in the maze (min=2,max=30): ", font=('calibre',10,'bold'))
         col_entry = tk.Entry(self._root,textvariable=num_col_input,font=('calibre',10,'bold'))
         col_input_label.grid(row=0,column=0)
         col_entry.grid(row=0,column=1)
         
-        row_input_label = tk.Label(self._root, text="Input number of rows in the maze (min=1,max=50): ", font=('calibre',10,'bold'))
+        row_input_label = tk.Label(self._root, text="Input number of rows in the maze (min=2,max=30): ", font=('calibre',10,'bold'))
         row_entry = tk.Entry(self._root,textvariable=num_rows_input,font=('calibre',10,'bold'))
         row_input_label.grid(row=1,column=0)
         row_entry.grid(row=1,column=1)
 
         def start():
-            num_col = col_entry.get()
-            num_row = row_entry.get()
-
-            self.not_ready=False
+            if col_entry.get().isdigit() is False:
+                messagebox.showerror("Warning", "Please enter a valid digit from 2-30 for columns.")
+            elif row_entry.get().isdigit() is False:
+                messagebox.showerror("Warning", "Please enter a valid digit from 2-30 for rows.")
+            else:
+                self.num_col = int(col_entry.get())
+                self.num_row = int(row_entry.get())
+                if self.num_col < 2:
+                    messagebox.showerror("Warning", "The number of columns is too low.")
+                elif self.num_col > 30:
+                    messagebox.showerror("Warning", "The number of columns is too high.")
+                elif self.num_row < 2:
+                    messagebox.showerror("Warning", "The number of rows is too low.")
+                elif self.num_row > 30:
+                    messagebox.showerror("Warning", "The number of rows is too high.")
+                else:
+                    self.not_ready=False
         start_button = tk.Button(self._root,text= "Start", command= start)
         start_button.grid(row=2,column=0)
     
@@ -36,7 +51,7 @@ class WelcomeWindow():
             self._root.update()
             pass
         self._root.destroy()
-        return MazeWindow(800,500)
+        return MazeWindow(1000,1000), [self.num_row,self.num_col]
 
 
 class MazeWindow():
@@ -45,12 +60,10 @@ class MazeWindow():
         self._root.title("Maze Solver")
         self.canvas = Canvas(self._root,bg="white",height=height,width=width)
         self.canvas.pack(fill="both",expand=True)
-        self.running = False
+        self.running = True
         self._root.protocol("WM_DELETE_WINDOW",self.close)
         self.height = height
         self.width = width
-        self._root.update_idletasks()
-        self._root.update()
 
 
     
@@ -71,9 +84,12 @@ class MazeWindow():
         self.running = True
         while self.running:
             self.redraw()
-
+        self._root.destroy()
+        sys.exit()
+    
     def close(self):
         self.running = False
+        
     
     def drawLine(self,line,fill_color="black"):
         line.draw(self.canvas,fill_color)
