@@ -74,6 +74,9 @@ class Maze():
         self.cell_size_x = cell_size_x
         self.cell_size_y = cell_size_y
         self._window = window
+        horizontal = ((num_cols) *cell_size_x) + (self.x1*2)
+        vert = ((num_rows) * cell_size_y) + (self.y1*2)
+        self._window.setCanvasSize(vert,horizontal)
         self.cells = []
         
 
