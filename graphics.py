@@ -50,12 +50,14 @@ class WelcomeWindow():
             self._root.update_idletasks()
             self._root.update()
             pass
+        x_winfo = self._root.winfo_x()
+        y_winfo = self._root.winfo_y()
         self._root.destroy()
-        return MazeWindow(1000,1000), [self.num_row,self.num_col]
+        return MazeWindow(1000,1000,x_winfo,y_winfo), [self.num_row,self.num_col]
 
 
 class MazeWindow():
-    def __init__(self, height,width):
+    def __init__(self, height,width,x_winfo,y_winfo):
         self._root = Tk()
         self._root.title("Maze Solver")
         self.canvas = Canvas(self._root,bg="white",height=height,width=width)
@@ -64,6 +66,8 @@ class MazeWindow():
         self._root.protocol("WM_DELETE_WINDOW",self.close)
         self.height = height
         self.width = width
+        self.x_winfo = x_winfo
+        self.y_winfo = y_winfo
 
 
     
@@ -71,7 +75,7 @@ class MazeWindow():
     def setCanvasSize(self,height,width):
         self._root.destroy()
         self._root = Tk()
-        self._root.geometry(f"{height}x{width}")
+        self._root.geometry(f"{height}x{width}+{self.x_winfo}+{self.y_winfo}")
         self.canvas = Canvas(self._root,bg="white",height=height,width=width)
         self.canvas.pack(fill="both")
         self.redraw()
